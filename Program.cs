@@ -16,9 +16,9 @@ namespace SpotifyAPIExample
             var response = await new OAuthClient(config).RequestToken(request);
 
             var spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-
+            
             // Search for a track
-            var searchRequest = new SearchRequest(SearchRequest.Types.Track, "Bohemian Rhapsody");
+            var searchRequest = new SearchRequest(SearchRequest.Types.Track, "family ties");
             var searchResult = await spotify.Search.Item(searchRequest);
 
             if (searchResult.Tracks.Items.Count > 0)
