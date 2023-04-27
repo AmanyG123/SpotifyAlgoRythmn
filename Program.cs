@@ -2,12 +2,13 @@
 using System.Threading.Tasks;
 using SpotifyAPI.Web;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace SpotifyAPIExample
 {
     class Program
     {
-        // Add Merge Sort algorithm method
+        // Merge Sort algorithm 
         public static List<KeyValuePair<Tuple<string, string>, int>> MergeSort(List<KeyValuePair<Tuple<string, string>, int>> list)
         {
             if (list.Count <= 1)
@@ -31,6 +32,7 @@ namespace SpotifyAPIExample
             return Merge(left, right);
         }
 
+        // Merge portion of Merge Sort
         public static List<KeyValuePair<Tuple<string, string>, int>> Merge(List<KeyValuePair<Tuple<string, string>, int>> left, List<KeyValuePair<Tuple<string, string>, int>> right)
         {
             List<KeyValuePair<Tuple<string, string>, int>> result = new List<KeyValuePair<Tuple<string, string>, int>>();
@@ -65,19 +67,43 @@ namespace SpotifyAPIExample
             return result;
         }
 
-        // ...\
 
-        // Convert the dictionary to a list of KeyValuePair
-     //   var trackPopularityList = trackPopularityMap.ToList();
+        //  Quick Sort algorithm method
+        public static void QuickSort(List<KeyValuePair<Tuple<string, string>, int>> list, int left, int right)
+        {
+            if (left < right)
+            {
+                int pivotIndex = Partition(list, left, right);
+                QuickSort(list, left, pivotIndex - 1);
+                QuickSort(list, pivotIndex + 1, right);
+            }
+        }
 
-        // Sort the tracks by popularity in descending order using Merge Sort
-   //     var sortedTracks = MergeSort(trackPopularityList);
+        // Partion Function
+        public static int Partition(List<KeyValuePair<Tuple<string, string>, int>> list, int left, int right)
+        {
+            int pivotValue = list[right].Value;
+            int i = left - 1;
 
-        // Take the top 5 most popular featured tracks
-     //   var top5FeaturedTracks = sortedTracks.Take(5);
+            for (int j = left; j <= right - 1; j++)
+            {
+                if (list[j].Value > pivotValue)
+                {
+                    i++;
+                    Swap(list, i, j);
+                }
+            }
+            Swap(list, i + 1, right);
+            return i + 1;
+        }
 
-        // ...
-
+        // Swap Function
+        public static void Swap(List<KeyValuePair<Tuple<string, string>, int>> list, int i, int j)
+        {
+            KeyValuePair<Tuple<string, string>, int> temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
+        }
         static async Task Main(string[] args)
         {
             var clientId = "2989616a929a4e0795fa42497949870c";
@@ -96,21 +122,21 @@ namespace SpotifyAPIExample
             var searchRequest = new SearchRequest(SearchRequest.Types.Artist, artistName);
             var searchResult = await spotify.Search.Item(searchRequest);
 
-            // ...
 
             if (searchResult.Artists.Items.Count > 0)
             {
                 var artist = searchResult.Artists.Items[0];
-                Console.WriteLine($"Found artist: {artist.Name}");
+                Console.WriteLine($"Found artist: {artist.Name}\n");
 
                 // Search for the top 50 tracks with the artist's name in the title
                 var featuringSearchRequest = new SearchRequest(SearchRequest.Types.Track, $"track:{artist.Name}")
                 {
                     Limit = 50
                 };
+
                 var featuringSearchResult = await spotify.Search.Item(featuringSearchRequest);
 
-                // Create a dictionary to store the tracks and their popularity scores
+                // Create a dictionary to store the artist, tracks, and their popularity scores
                 var trackPopularityMap = new Dictionary<Tuple<string, string>, int>();
 
                 // Filter tracks to keep only the ones where the searched artist is not the main artist
@@ -127,30 +153,52 @@ namespace SpotifyAPIExample
                     }
                 }
 
-                // Sort the tracks by popularity in descending order and take the top 5
                 // Convert the dictionary to a list of KeyValuePair
                 var trackPopularityList = trackPopularityMap.ToList();
 
-                // Sort the tracks by popularity in descending order using Merge Sort
-                var sortedTracks = MergeSort(trackPopularityList);
 
-                // Take the top 5 most popular featured tracks
-                var top5FeaturedTracks = sortedTracks.GetRange(0, Math.Min(5, sortedTracks.Count));
+                // Measure time taken by Merge Sort
+                Stopwatch mergeSortTimer = new Stopwatch();
+                mergeSortTimer.Start();
+                var mergeSortedTracks = MergeSort(trackPopularityList);
+                mergeSortTimer.Stop();
+                TimeSpan mergeSortTime = mergeSortTimer.Elapsed;
 
-                // Display the top 5 most popular featured tracks
-                Console.WriteLine("Top 5 most popular featured tracks:");
-                foreach (var entry in top5FeaturedTracks)
+                // Take the top 5 most popular featured tracks for Merge Sort
+                var top5FeaturedTracksMergeSort = mergeSortedTracks.GetRange(0, Math.Min(5, mergeSortedTracks.Count));
+
+                // Display the top 5 most popular featured tracks sorted by Merge Sort
+                Console.WriteLine("Merge Sort: Top 5 most popular featured tracks:");
+                foreach (var entry in top5FeaturedTracksMergeSort)
                 {
                     Console.WriteLine($"Track: {entry.Key.Item1} by {entry.Key.Item2} (featuring {artist.Name}), Popularity score: {entry.Value}");
                 }
+
+                // Measure time taken by Quick Sort
+                Stopwatch quickSortTimer = new Stopwatch();
+                quickSortTimer.Start();
+                QuickSort(trackPopularityList, 0, trackPopularityList.Count - 1);
+                quickSortTimer.Stop();
+                TimeSpan quickSortTime = quickSortTimer.Elapsed;
+
+                // Take the top 5 most popular featured tracks for Quick Sort
+                var top5FeaturedTracksQuickSort = trackPopularityList.GetRange(0, Math.Min(5, trackPopularityList.Count));
+
+                // Display the top 5 most popular featured tracks sorted by Quick Sort
+                Console.WriteLine("\nQuick Sort: Top 5 most popular featured tracks:");
+                foreach (var entry in top5FeaturedTracksQuickSort)
+                {
+                    Console.WriteLine($"Track: {entry.Key.Item1} by {entry.Key.Item2} (featuring {artist.Name}), Popularity score: {entry.Value}");
+                }
+
+                // Compare Merge Sort and Quick Sort time
+                Console.WriteLine($"\nTime taken by Merge Sort: {mergeSortTime}");
+                Console.WriteLine($"Time taken by Quick Sort: {quickSortTime}");
             }
             else
             {
                 Console.WriteLine("Artist not found.");
             }
-
-            // ...
-
         }
     }
 }
